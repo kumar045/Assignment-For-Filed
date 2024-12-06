@@ -1,0 +1,37 @@
+{
+    "movies": [
+      {
+        "title": "The Matrix",
+        "released": "1999",
+        "genre": ["Science Fiction", "Action"]
+      },
+      {
+        "title": "Inception",
+        "released": "2010",
+        "genre": ["Science Fiction", "Action", "Thriller"]
+      },
+      {
+        "title": "Forrest Gump",
+        "released": "1994",
+        "genre": ["Drama", "Romance"]
+      }
+    ],
+    "people": [
+      {
+        "name": "Keanu Reeves",
+        "born": "1964",
+        "acted_in": ["The Matrix"]
+      },
+      {
+        "name": "Leonardo DiCaprio",
+        "born": "1974",
+        "acted_in": ["Inception"]
+      },
+      {
+        "name": "Tom Hanks",
+        "born": "1956",
+        "acted_in": ["Forrest Gump"]
+      }
+    ]
+  }
+  
