@@ -189,7 +189,7 @@ def main():
     # Replace with your actual Neo4j connection details
     NEO4J_URI = "neo4j+s://43bbec66.databases.neo4j.io"
     NEO4J_USERNAME = "neo4j"
-    NEO4J_PASSWORD = "oxdaE5lHvS36FldxmVuaRAcFG44b-Zh6CedjOyto8eM"
+    NEO4J_PASSWORD = ""
 
     try:
         rag_system = GraphRAG(NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD)
