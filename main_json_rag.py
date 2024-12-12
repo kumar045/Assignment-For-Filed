@@ -1,6 +1,7 @@
 from langchain_ollama.chat_models import ChatOllama
 import pandas as pd
 import numpy as np
+from report import generate_report
 from pathlib import Path
 from typing import List, Dict
 
@@ -51,6 +52,62 @@ def format_results(results: Dict[str, pd.DataFrame]) -> str:
     
     return formatted_text
 
+def generate_prompt(formatted_results, results):
+    """
+    Generate a comprehensive prompt for detailed data analysis and reporting.
+    
+    :param formatted_results: Formatted string of data entries
+    :param results: List of result entries
+    :return: Detailed analysis prompt
+    """
+    prompt = (
+        "Comprehensive Data Analysis Report Instructions:\n\n"
+        "Objective: Conduct a thorough, systematic analysis of the provided data entries "
+        "and generate a professional, detailed report.\n\n"
+        "Input Data:\n"
+        f"{formatted_results}\n\n"
+        "Report Requirements:\n"
+        "1. Executive Summary:\n"
+        "   - Provide a high-level overview of the entire dataset\n"
+        "   - Highlight key findings and primary insights\n"
+        "   - Capture the essence of the data in 3-4 concise paragraphs\n\n"
+        "2. Detailed Analysis Components:\n"
+        "   a) Individual Entry Analysis:\n"
+        "      - Examine each data entry meticulously\n"
+        "      - Identify unique characteristics and significant attributes\n"
+        "      - Provide in-depth insights for each entry\n\n"
+        "   b) Intra-File Relationship Analysis:\n"
+        "      - If multiple entries exist within a single file:\n"
+        "        * Analyze relationships between entries\n"
+        "        * Identify commonalities and distinctive patterns\n"
+        "        * Explore potential correlations or dependencies\n\n"
+    )
+    
+    # Conditional section for multi-file analysis
+    if len(results) > 1:
+        prompt += (
+            "   c) Inter-File Comparative Analysis:\n"
+            "      - Compare and contrast entries across different files\n"
+            "      - Identify overarching patterns and shared characteristics\n"
+            "      - Explore potential cross-file relationships and insights\n\n"
+        )
+    
+    # Concluding analysis sections
+    prompt += (
+        "3. Advanced Insights and Conclusions:\n"
+        "   - Synthesize findings from all analysis stages\n"
+        "   - Draw meaningful conclusions based on data patterns\n"
+        "   - Provide forward-looking interpretations\n"
+        "   - Highlight potential implications or recommendations\n\n"
+        "Output Specifications:\n"
+        "- No additional explanatory text outside the HTML\n"
+        "- Maintain objectivity and analytical rigor\n\n"
+        "Final Deliverable: A comprehensive, insightful report "
+        "that transforms raw data into meaningful intelligence."
+    )
+    
+    return prompt
+
 def analyze_results(results: Dict[str, pd.DataFrame], llm: ChatOllama) -> str:
     """Analyze results using LLM."""
     if not results:
@@ -58,24 +115,12 @@ def analyze_results(results: Dict[str, pd.DataFrame], llm: ChatOllama) -> str:
     
     formatted_results = format_results(results)
     
-    prompt = (
-        f"Please analyze the following data entries:\n\n"
-        f"{formatted_results}\n"
-        f"Provide:\n"
-        f"1. A summary of the findings\n"
-        f"2. Any notable patterns or relationships within each file\n"
-        f"3. If there are multiple entries in a single file, analyze their relationships and commonalities\n"
-    )
-    
-    if len(results) > 1:
-        prompt += "4. Potential relationships or common factors between different files\n"
-    
-    prompt += "5. Any insights or conclusions that can be drawn from the data"
+    prompt = generate_prompt(formatted_results, results)
     
     return llm.invoke(prompt)
 
 def main():
-    llm = ChatOllama(model="llama3.1:latest")
+    llm = ChatOllama(model="llama3.1:latest",temperature=0)
     
     # Hardcoded directory path (no input from user)
     directory = "RAG"
@@ -103,7 +148,8 @@ def main():
             
             print("\nAI Analysis:")
             analysis = analyze_results(results, llm)
-            print(analysis)
+            generate_report(analysis.content)
+            print(analysis.content)
             
         except Exception as e:
             print(f"An error occurred: {e}")
