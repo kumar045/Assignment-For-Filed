@@ -27,7 +27,6 @@ Settings.llm = Ollama(model="llama3.1:latest")
 llamaparse_api_key = "llx-xxP3LgbNXHCZ5ESFGPdsq8TbArQrep2gEL8qoUjIQ5kw1Sms"
 parser = LlamaParse(api_key=llamaparse_api_key, result_type="markdown")
 
-@st.cache_resource
 def load_model():
     model_name = "vidore/colpali-v1.2"
     token = os.getenv("HF_TOKEN")
@@ -134,33 +133,55 @@ def model_inference(query, documents, images, model_name="llama3.2-vision:latest
             input_image.save(temp_png_path, format="PNG")
             image_paths.append(temp_png_path)
         
-        # Combine query, text content, and images in the message
-        combined_message = [
+        # Initialize the conversation with the query and text content
+        conversation = [
             {
                 'role': 'user',
-                'content': f"Based on the following information and images, please answer this query: {query}\n\nText Content:\n{text_content}",
-                'images': image_paths
+                'content': f"I will show you multiple images one by one. For each image, provide a brief description and note any significant elements. After all images, I will ask you to analyze them collectively. Here's the context and query: {query}\n\nText Content:\n{text_content}"
             }
         ]
 
-        response = ollama.chat(
-            model=model_name,
-            messages=combined_message
-        )
+        # Process each image separately
+        for idx, image_path in enumerate(image_paths):
+            conversation.append({
+                'role': 'user',
+                'content': f"Describe image {idx + 1} of {len(image_paths)}:",
+                'images': [image_path]
+            })
+            
+            response = ollama.chat(
+                model=model_name,
+                messages=conversation,
+                keep_alive=0
+            )
+            
+            conversation.append(response['message'])
 
-        answer = response['message']['content']
+        # Ask for final analysis
+        conversation.append({
+            'role': 'user',
+            'content': "Now that you've seen all the images, please provide a comprehensive answer to the original query, considering all images and the provided context."
+        })
+
+        final_response = ollama.chat(
+            model=model_name,
+            messages=conversation,
+            keep_alive=0
+        )
 
         # Clean up temporary files
         for path in image_paths:
             os.remove(path)
         os.rmdir(temp_dir)
 
-        return answer.strip()
+        # Return the final answer
+        return final_response['message']['content'].strip()
+    
     except Exception as e:
         return f"Error communicating with Ollama: {str(e)}"
 
 def main():
-    st.title("Document and Image Question Answering System")
+    st.title("Converse with documents")
 
     uploaded_files = st.file_uploader("Upload documents and images", type=["pdf", "docx", "txt", "xlsx", "png", "jpg", "jpeg", "gif"], accept_multiple_files=True)
 
